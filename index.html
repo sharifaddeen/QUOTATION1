@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quick Quote</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+    background: #f4f6f8;
+    color: #1f2933;
+    padding: 24px;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  header.app {
+    display: flex; align-items: baseline; gap: 12px;
+    margin-bottom: 20px;
+  }
+  header.app h1 { font-size: 24px; font-weight: 700; }
+  header.app span { color: #6b7280; font-size: 13px; }
+  section {
+    background: #ffffff;
+    border: 1px solid #e2e6ea;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  section h2 {
+    font-size: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #374151;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eef1f4;
+  }
+  label { display: block; font-size: 12px; font-weight: 600; color: #4b5563; margin: 10px 0 4px; }
+  input[type="text"], input[type="date"], textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #cbd2d9;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    background: #fbfcfd;
+  }
+  input:focus, textarea:focus { outline: 2px solid #2f6fed33; border-color: #2f6fed; }
+  textarea { resize: vertical; min-height: 54px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 16px; }
+  button {
+    font-family: inherit;
+    font-size: 13px;
+    padding: 7px 14px;
+    border-radius: 6px;
+    border: 1px solid #cbd2d9;
+    background: #fff;
+    cursor: pointer;
+    color: #1f2933;
+  }
+  button:hover { background: #f1f4f7; }
+  button.primary {
+    background: #2f6fed;
+    border-color: #2f6fed;
+    color: #fff;
+    font-weight: 600;
+  }
+  button.primary:hover { background: #255cd1; }
+  .hint { font-size: 12px; color: #6b7280; margin-top: 4px; }
+
+  #matchResult { margin-top: 14px; }
+  .match-card {
+    border: 1px solid #d8dee4;
+    border-left: 4px solid #2f6fed;
+    border-radius: 6px;
+    padding: 12px 14px;
+    background: #f8fafc;
+  }
+  .match-card .pname { font-weight: 700; font-size: 15px; }
+  .match-card .pmeta { font-size: 12px; color: #6b7280; margin: 4px 0 8px; }
+  .match-card .qrow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .match-card .qrow input {
+    width: 90px;
+    padding: 5px 8px;
+    border: 1px solid #cbd2d9;
+    border-radius: 5px;
+    font-size: 13px;
+  }
+  .nomatch { font-size: 13px; color: #b45309; background: #fef8ec; border: 1px solid #f3ddab; border-radius: 6px; padding: 10px 12px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #6b7280;
+    padding: 8px 8px;
+    border-bottom: 2px solid #e2e6ea;
+  }
+  td { padding: 8px; border-bottom: 1px solid #eef1f4; vertical-align: middle; }
+  td.qty-cell input, td.price-cell input {
+    width: 72px;
+    padding: 5px 6px;
+    border: 1px solid #cbd2d9;
+    border-radius: 5px;
+    font-size: 13px;
+    text-align: right;
+    background: #fbfcfd;
+  }
+  td.num { text-align: right; }
+  td .item-sub { font-size: 11px; color: #6b7280; }
+  .remove-btn { color: #b02a2a; border-color: #e4b4b4; padding: 4px 10px; font-size: 12px; }
+  .remove-btn:hover { background: #fdf0f0; }
+  .totals { margin-top: 14px; max-width: 300px; margin-left: auto; }
+  .totals .row {
+    display: flex; justify-content: space-between;
+    padding: 6px 10px; font-size: 14px;
+  }
+  .totals .row.grand {
+    border-top: 2px solid #1f2933;
+    margin-top: 6px;
+    padding-top: 10px;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .empty-note { font-size: 13px; color: #6b7280; padding: 10px 4px; }
+  .doc-meta { font-size: 12px; color: #6b7280; margin-top: 2px; }
+  .doc-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+  .doc-note { font-size: 13px; color: #374151; margin: 10px 0 14px; padding: 10px 12px; background: #f8fafc; border-radius: 6px; }
+  #quoteDoc table { margin-top: 4px; }
+  .doc-sign { margin-top: 24px; font-size: 12px; color: #6b7280; }
+  @media print {
+    @page { size: A4; margin: 18mm; }
+    body { background: #fff; padding: 0; }
+    header.app, #section-details, #section-matcher, #section-summary, #docSection > h2, #docSection > div:last-child { display: none !important; }
+    section { border: none; padding: 0; margin: 0; max-width: none; }
+    #docSection { display: block !important; }
+    #quoteDoc { border: none; padding: 0; font-size: 12px; }
+    #quoteDoc td, #quoteDoc th { padding: 6px 6px; }
+  }
+  .quote-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .quote-head .qfor { font-size: 14px; }
+  .quote-head .qfor strong { font-size: 16px; }
+  .quote-head .qdate { font-size: 12px; color: #6b7280; text-align: right; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="app">
+    <h1>Quick Quote</h1>
+    <span>Sample quotations only — nothing is saved between visits</span>
+  </header>
+
+  <!-- 1. Quote details -->
+  <section id="section-details">
+    <h2>1 · Quote Details</h2>
+    <div class="grid2">
+      <div>
+        <label for="custName">Customer name</label>
+        <input type="text" id="custName" placeholder="e.g. Puan Aminah from Kedai Makan Warisan">
+      </div>
+      <div>
+        <label for="quoteTitle">Quote title</label>
+        <input type="text" id="quoteTitle" placeholder="e.g. Kitchen fire safety package">
+      </div>
+    </div>
+    <div class="grid2">
+      <div>
+        <label for="quoteDate">Date</label>
+        <input type="date" id="quoteDate">
+      </div>
+    </div>
+    <label for="custNotes">Request notes</label>
+    <textarea id="custNotes" placeholder="Type what the customer asked for, e.g. 'fire extinguisher abc powder 9kg'"></textarea>
+    <p class="hint">Edit these details anytime — the summary below updates as you type.</p>
+  </section>
+
+  <!-- 2. Product matcher -->
+  <section id="section-matcher">
+    <h2>2 · Product Matcher</h2>
+    <p class="hint" style="margin-bottom:10px;">Sample catalogue (RM prices, demo data). Click <strong>Match request</strong> or type in the request notes above, then press Enter. Click a suggested item to prepare it, then add it to the quote.</p>
+    <table id="catalogTable">
+      <thead>
+        <tr><th>Product</th><th>Type</th><th>Description</th><th>Unit price</th><th>Suggested qty</th><th></th></tr>
+      </thead>
+      <tbody id="catalogBody"></tbody>
+    </table>
+    <div id="matchResult"></div>
+  </section>
+
+  <!-- 3. Quote summary -->
+  <section id="section-summary">
+    <h2>3 · Quote Summary</h2>
+    <div class="quote-head">
+      <div class="qfor">
+        <div id="sumCust" style="color:#6b7280;">No customer yet — fill in Quote Details above</div>
+        <strong id="sumTitle" style="display:none;"></strong>
+      </div>
+      <div class="qdate" id="sumDate"></div>
+    </div>
+    <table id="quoteTable">
+      <thead>
+        <tr><th>Item</th><th>Qty</th><th>Unit price (RM)</th><th style="text-align:right;">Line total (RM)</th><th></th></tr>
+      </thead>
+      <tbody id="quoteBody"></tbody>
+    </table>
+      <div class="totals">
+      <div class="row"><span>Subtotal</span><span id="subtotal">RM 0.00</span></div>
+      <div class="row grand"><span>Total</span><span id="grand">RM 0.00</span></div>
+    </div>
+    <div style="margin-top:16px;text-align:right;">
+      <button class="primary" id="generateBtn">Generate quotation</button>
+    </div>
+  </section>
+
+  <!-- Generated quotation document -->
+  <section id="docSection" style="display:none;">
+    <h2>Generated Quotation</h2>
+    <div id="quoteDoc" style="border:1px solid #e2e6ea;border-radius:6px;padding:24px;background:#fff;"></div>
+    <div style="margin-top:12px;text-align:right;">
+      <button id="printBtn">Print / Save as PDF</button>
+    </div>
+  </section>
+</div>
+
+<script>
+// ---------- Sample data (fictional, Malaysian-flavoured demo catalogue) ----------
+const CATALOG = [
+  { id: 1, name: "ABC Dry Powder Fire Extinguisher 9kg", type: "Fire safety", desc: "Wall-mounted ABC powder extinguisher, 9kg, with bracket and pressure gauge", price: 185.00, qty: 2, tags: ["fire","extinguisher","abc","powder","9kg","safety","api","padam"] },
+  { id: 2, name: "CO2 Fire Extinguisher 5kg", type: "Fire safety", desc: "CO2 extinguisher suitable for electrical fires, 5kg, SIRIM-certified body", price: 240.00, qty: 1, tags: ["fire","extinguisher","co2","electrical","5kg","safety"] },
+  { id: 3, name: "Fire Extinguisher Service & Refill", type: "Fire safety", desc: "Annual service, pressure test and refill for one extinguisher unit", price: 60.00, qty: 1, tags: ["service","refill","maintenance","fire","extinguisher","yearly"] },
+  { id: 4, name: "Industrial Standing Fan 26\"", type: "Cooling", desc: "Heavy-duty 3-speed standing fan with metal blades, suitable for workshops", price: 145.00, qty: 2, tags: ["fan","kipas","cooling","industrial","standing","workshop"] },
+  { id: 5, name: "Wall-Mounted Fan 18\"", type: "Cooling", desc: "Oscillating wall fan with pull-chain control, ideal for shops and cafes", price: 98.00, qty: 2, tags: ["fan","kipas","wall","dinding","cooling","shop","cafe"] },
+  { id: 6, name: "Cash Drawer Heavy Duty", type: "POS equipment", desc: "Steel cash drawer with 5 compartments and removable coin tray, RJ11 interface", price: 210.00, qty: 1, tags: ["cash","drawer","pos","kotak","duit","counter","payment"] },
+  { id: 7, name: "Thermal Receipt Printer 80mm", type: "POS equipment", desc: "USB + Bluetooth thermal printer for point-of-sale receipts, auto-cutter", price: 260.00, qty: 1, tags: ["printer","receipt","thermal","pos","resit","80mm"] },
+  { id: 8, name: "Barcode Scanner 2D Wireless", type: "POS equipment", desc: "Wireless 2D scanner reads QR codes and barcodes, 10-hour battery", price: 175.00, qty: 1, tags: ["barcode","scanner","qr","pos","imbas"] },
+  { id: 9, name: "Safety Helmet (White, ANSI Z89.1)", type: "Safety gear", desc: "Adjustable industrial safety helmet with chin strap, white", price: 35.00, qty: 5, tags: ["helmet","helmet","safety","topi","keselamatan","site","construction"] },
+  { id: 10, name: "High-Visibility Vest (Reflective)", type: "Safety gear", desc: "Reflective safety vest with velcro front, sizes M–XXL, orange", price: 18.00, qty: 10, tags: ["vest","jacket","reflective","hi-vis","safety","baju","keselamatan"] },
+  { id: 11, name: "LED Panel Light 36W (4ft)", type: "Lighting", desc: "Slim LED ceiling panel, 36W, cool white 6500K, for shops and offices", price: 55.00, qty: 6, tags: ["light","lampu","led","panel","ceiling","36w","office"] },
+  { id: 12, name: "Digital Door Lock (PIN + Card)", type: "Security", desc: "Keyless door lock with PIN, RFID card and mechanical key backup", price: 890.00, qty: 1, tags: ["lock","pintu","digital","door","security","keselamatan","smart"] },
+  { id: 13, name: "CCTV Camera 4MP Dome (Indoor)", type: "Security", desc: "4-megapixel indoor dome camera with night vision, PoE powered", price: 165.00, qty: 4, tags: ["cctv","camera","kamera","security","indoor","surveillance"] },
+  { id: 14, name: "Label Sticker Roll 40x30mm", type: "Packaging", desc: "Direct thermal label roll, 40x30mm, 1000 stickers per roll", price: 12.50, qty: 5, tags: ["label","sticker","roll","pelekat","thermal","packaging"] },
+  { id: 15, name: "Cardboard Box Medium (18x12x10)", type: "Packaging", desc: "Single-wall corrugated box, medium size, bundle of 25 pieces", price: 22.00, qty: 4, tags: ["box","kotak","cardboard","packaging","carton","storage"] }
+];
+
+let quoteItems = [
+  { productId: 1, name: "ABC Dry Powder Fire Extinguisher 9kg", desc: "Wall-mounted ABC powder extinguisher, 9kg, with bracket and pressure gauge", qty: 2, price: 185.00 },
+  { productId: 5, name: "Wall-Mounted Fan 18\"", desc: "Oscillating wall fan with pull-chain control, ideal for shops and cafes", qty: 2, price: 98.00 },
+  { productId: 14, name: "Label Sticker Roll 40x30mm", desc: "Direct thermal label roll, 40x30mm, 1000 stickers per roll", qty: 5, price: 12.50 }
+];
+
+// ---------- Helpers ----------
+const rm = n => "RM " + n.toFixed(2);
+const $ = id => document.getElementById(id);
+
+// ---------- Section 2: catalogue ----------
+function renderCatalog() {
+  const body = $("catalogBody");
+  body.innerHTML = "";
+  CATALOG.forEach(p => {
+    const tr = document.createElement("tr");
+    tr.innerHTML =
+      '<td><strong>' + p.name + '</strong></td>' +
+      '<td>' + p.type + '</td>' +
+      '<td style="color:#6b7280;">' + p.desc + '</td>' +
+      '<td>' + rm(p.price) + '</td>' +
+      '<td>x' + p.qty + '</td>' +
+      '<td style="text-align:right;"><button data-id="' + p.id + '">Add</button></td>';
+    tr.querySelector("button").addEventListener("click", () => addToQuote(p));
+    body.appendChild(tr);
+  });
+}
+
+// ---------- Feature 1: match request to products ----------
+function scoreProduct(p, words) {
+  let score = 0;
+  const nameLower = (p.name + " " + p.type + " " + p.desc + " " + p.tags.join(" ")).toLowerCase();
+  words.forEach(w => {
+    if (nameLower.includes(w)) score += (p.name.toLowerCase().includes(w) || p.tags.includes(w)) ? 3 : 1;
+  });
+  return score;
+}
+
+function matchRequest(text) {
+  const words = (text || "").toLowerCase().split(/[^a-z0-9\"]+/).filter(w => w.length > 1);
+  const results = CATALOG.map(p => ({ p, s: scoreProduct(p, words) }))
+    .filter(r => r.s > 0)
+    .sort((a, b) => b.s - a.s)
+    .slice(0, 3);
+  const box = $("matchResult");
+  if (!results.length) {
+    box.innerHTML = '<div class="nomatch">No matching product in the sample catalogue. Try words like "fire extinguisher", "fan", "cctv", "cash drawer" or "box".</div>';
+    return;
+  }
+  const top = results[0].p;
+  const others = results.slice(1);
+  box.innerHTML =
+    '<div class="match-card">' +
+      '<div class="pname">Closest match: ' + top.name + '</div>' +
+      '<div class="pmeta">' + top.type + ' · ' + top.desc + ' · ' + rm(top.price) + ' each</div>' +
+      '<div class="qrow">' +
+        '<label style="margin:0;">Qty</label>' +
+        '<input type="text" id="matchQty" value="' + top.qty + '">' +
+        '<label style="margin:0;">Unit price (RM)</label>' +
+        '<input type="text" id="matchPrice" value="' + top.price.toFixed(2) + '">' +
+        '<button class="primary" id="matchAdd">Add to quote</button>' +
+        (others.length ? '<button id="matchAlt">Show other matches (' + others.length + ')</button>' : '') +
+      '</div>' +
+      '<div id="altMatches"></div>' +
+    '</div>';
+  $("matchAdd").addEventListener("click", () => {
+    const q = parseInt($("matchQty").value, 10) || 1;
+    const pr = parseFloat($("matchPrice").value) || top.price;
+    addToQuote({ productId: top.id, name: top.name, desc: top.desc, qty: q, price: pr });
+    box.innerHTML = '<div class="nomatch" style="color:#166534;background:#f0fdf4;border-color:#bbe7c4;">Added <strong>' + top.name + '</strong> x' + q + ' to the quote below.</div>';
+  });
+  if (others.length) {
+    $("matchAlt").addEventListener("click", () => {
+      const alt = $("altMatches");
+      if (alt.dataset.open) { alt.innerHTML = ""; delete alt.dataset.open; return; }
+      alt.dataset.open = "1";
+      alt.innerHTML = others.map(r =>
+        '<div class="match-card" style="margin-top:8px;border-left-color:#cbd2d9;">' +
+          '<div class="pname" style="font-size:13px;">' + r.p.name + '</div>' +
+          '<div class="pmeta">' + r.p.type + ' · ' + rm(r.p.price) + ' each</div>' +
+          '<div class="qrow"><button class="primary" data-add="' + r.p.id + '">Add to quote</button></div>' +
+        '</div>').join("");
+      alt.querySelectorAll("[data-add]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const p = CATALOG.find(c => c.id == btn.dataset.add);
+          addToQuote(p);
+          alt.innerHTML = '<div class="nomatch" style="color:#166534;background:#f0fdf4;border-color:#bbe7c4;">Added <strong>' + p.name + '</strong> to the quote.</div>';
+        });
+      });
+    });
+  }
+}
+
+// ---------- Feature 2: add selected items ----------
+function addToQuote(p) {
+  const existing = quoteItems.find(i => i.productId === p.productId);
+  if (existing) {
+    existing.qty += (p.qty || 1);
+  } else {
+    quoteItems.push({ productId: p.productId, name: p.name, desc: p.desc, qty: p.qty || 1, price: p.price });
+  }
+  renderQuote();
+}
+
+// ---------- Section 3 + Feature 3: quote table with live totals ----------
+function renderQuote() {
+  const body = $("quoteBody");
+  body.innerHTML = "";
+  if (!quoteItems.length) {
+    body.innerHTML = '<tr><td colspan="5" class="empty-note">No items yet — add products from the Product Matcher above.</td></tr>';
+  }
+  quoteItems.forEach((item, idx) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML =
+      '<td><strong>' + item.name + '</strong><div class="item-sub">' + item.desc + '</div></td>' +
+      '<td class="qty-cell"><input type="text" data-f="qty" data-i="' + idx + '" value="' + item.qty + '"></td>' +
+      '<td class="price-cell"><input type="text" data-f="price" data-i="' + idx + '" value="' + item.price.toFixed(2) + '"></td>' +
+      '<td class="num" data-line="' + idx + '">' + rm(item.qty * item.price) + '</td>' +
+      '<td style="text-align:right;"><button class="remove-btn" data-del="' + idx + '">Remove</button></td>';
+    body.appendChild(tr);
+  });
+  body.querySelectorAll("input[data-f]").forEach(inp => {
+    inp.addEventListener("input", e => {
+      const i = +e.target.dataset.i;
+      if (e.target.dataset.f === "qty") quoteItems[i].qty = parseInt(e.target.value, 10) || 0;
+      else quoteItems[i].price = parseFloat(e.target.value) || 0;
+      updateTotals();
+    });
+  });
+  body.querySelectorAll("[data-del]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      quoteItems.splice(+btn.dataset.del, 1);
+      renderQuote();
+    });
+  });
+  updateTotals();
+}
+
+function updateTotals() {
+  let subtotal = 0;
+  quoteItems.forEach((item, i) => {
+    subtotal += item.qty * item.price;
+    const line = document.querySelector('[data-line="' + i + '"]');
+    if (line) line.textContent = rm(item.qty * item.price);
+  });
+  $("subtotal").textContent = rm(subtotal);
+  $("grand").textContent = rm(subtotal);
+}
+
+// ---------- Live quote header from Section 1 ----------
+function refreshHeader() {
+  const cust = $("custName").value.trim();
+  const title = $("quoteTitle").value.trim();
+  const date = $("quoteDate").value;
+  $("sumCust").textContent = cust ? "For: " + cust : "No customer yet — fill in Quote Details above";
+  $("sumTitle").textContent = title;
+  $("sumTitle").style.display = title ? "block" : "none";
+  $("sumDate").textContent = date ? "Quotation date: " + date : "";
+}
+
+// ---------- Generate quotation document ----------
+function generateQuotation() {
+  const cust = $("custName").value.trim() || "(customer name not set)";
+  const title = $("quoteTitle").value.trim();
+  const date = $("quoteDate").value;
+  const notes = $("custNotes").value.trim();
+  let subtotal = 0;
+  const rows = quoteItems.map(i => {
+    subtotal += i.qty * i.price;
+    return '<tr><td><strong>' + i.name + '</strong><div class="item-sub">' + i.desc + '</div></td>' +
+      '<td class="num">' + i.qty + '</td><td class="num">' + rm(i.price) + '</td><td class="num">' + rm(i.qty * i.price) + '</td></tr>';
+  }).join("");
+  $("quoteDoc").innerHTML =
+    '<div class="doc-title">' + (title || "Quotation") + '</div>' +
+    '<div><strong>For:</strong> ' + cust + '</div>' +
+    (date ? '<div class="doc-meta">Quotation date: ' + date + '</div>' : '') +
+    '<div class="doc-meta">Prepared with Quick Quote — sample/demonstration document, prices in Malaysian Ringgit (RM)</div>' +
+    (notes ? '<div class="doc-note"><strong>Request notes:</strong> ' + notes + '</div>' : '') +
+    '<table><thead><tr><th>Item</th><th style="text-align:right;">Qty</th><th style="text-align:right;">Unit price</th><th style="text-align:right;">Amount</th></tr></thead>' +
+    '<tbody>' + (rows || '<tr><td colspan="4" class="empty-note">No items in this quotation yet.</td></tr>') + '</tbody></table>' +
+    '<div class="totals"><div class="row"><span>Subtotal</span><span>' + rm(subtotal) + '</span></div>' +
+    '<div class="row grand"><span>Total</span><span>' + rm(subtotal) + '</span></div></div>' +
+    '<div class="doc-sign">This quotation is valid for 14 days from the date shown. All prices are sample values for demonstration.</div>';
+  $("docSection").style.display = "block";
+  $("docSection").scrollIntoView({ behavior: "smooth" });
+}
+$("generateBtn").addEventListener("click", generateQuotation);
+$("printBtn").addEventListener("click", () => window.print());
+
+// ---------- Init (app never opens empty) ----------
+(function init() {
+  renderCatalog();
+  renderQuote();
+  $("custName").value = "Puan Aminah, Kedai Makan Warisan (Kuala Terengganu)";
+  $("quoteTitle").value = "Shop refit: cooling & packaging supplies";
+  $("quoteDate").value = new Date().toISOString().slice(0, 10);
+  $("custNotes").value = "Customer asked for two 9kg ABC powder extinguishers and packaging boxes for takeaway orders.";
+  refreshHeader();
+  ["custName", "quoteTitle", "quoteDate"].forEach(id => $(id).addEventListener("input", refreshHeader));
+  $("custNotes").addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      matchRequest($("custNotes").value);
+    }
+  });
+})();
+</script>
+</body>
+</html>
